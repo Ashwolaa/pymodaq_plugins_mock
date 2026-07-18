@@ -57,7 +57,10 @@ class DAQ_0DViewer_Mock(DAQ_Viewer_base):
     params = comon_parameters + [
         {'title': 'Wait time (ms)', 'name': 'wait_time', 'type': 'int', 'value': 100, 'default': 100, 'min': 0},
         {'title': 'Separated viewers', 'name': 'sep_viewers', 'type': 'bool', 'value': False},
-        {'title': 'Show in LCD', 'name': 'lcd', 'type': 'bool', 'value': False},
+        {'title': 'Mock channels', 'name': 'lcd', 'type': 'group', 'children': [
+            {'title': 'Show in LCD', 'name': 'show_lcd', 'type': 'bool', 'value': False},
+            {'title': 'Show LCD Graph', 'name': 'lcd_graph', 'type': 'bool', 'value': False},
+        ]},
         {'title':'Mock channels', 'name': 'mocks', 'type':'groupmock', 'children':[
             {'title': 'Mock 00', 'name': 'Mock_00', 'type': 'bool', 'value': True,
              'removable': True, 'renamable': False,
@@ -196,13 +199,19 @@ class DAQ_0DViewer_Mock(DAQ_Viewer_base):
                                               data=[DataFromPlugins(name='Mock0D', data=data_tot,
                                                                     dim='Data0D', labels=labels)]))
         self.ind_data += 1
-        if self.settings['lcd']:
+        if self.settings['lcd', 'show_lcd']:
             if not self.lcd_init:
-                self.emit_status(ThreadCommand('init_lcd', dict(labels=labels, Nvals=len(labels), digits=6)))
+                self.emit_status(
+                    ThreadCommand('init_lcd',
+                                  dict(labels=labels,
+                                       Nvals=len(labels),
+                                       digits=6,
+                                       show_graph=self.settings['lcd', 'lcd_graph'])))
                 QtWidgets.QApplication.processEvents()
                 self.lcd_init = True
 
-            self.emit_status(ThreadCommand('lcd', data_tot))
+            self.emit_status(ThreadCommand('lcd', dict(values=data_tot,
+                                                       show_graph=self.settings['lcd', 'lcd_graph'])))
 
     def stop(self):
         """
